@@ -6,8 +6,6 @@ class Yandex_Client:
     def __init__(self, token:str, user_id:int) -> None:
         self.token = token
         self.user_id = user_id
-        if not self._check_folder():
-            print('Ошибка проверки токена Yandex диска!')
 
     def _set_common_header(self):
         return {
@@ -18,7 +16,7 @@ class Yandex_Client:
     def _set_common_params(self):
         return {'path' : f'disk:/Netology-Homework_VK_API/{self.user_id}'}
     
-    def _check_folder(self):
+    def check_folder(self):
         params = self._set_common_params()    
         response = requests.get(self._BASE_URL, headers=self._set_common_header(), params=params)
         if response.status_code == 404:
@@ -31,6 +29,9 @@ class Yandex_Client:
         elif response.status_code//100 == 2:
             return True
         else:
+            error = response.json()['error']
+            with open('log.txt', 'w') as log_file:
+                log_file.write(error)
             return False
     
     def create_folder_on_yadisk(self, path:str)->bool:
@@ -41,8 +42,12 @@ class Yandex_Client:
         if response.status_code == 201:
             print(f'Дирректория {path} успешно создана!')
             return True
+        elif response.status_code == 409:
+            return True
         else:
-            print(f'Ошибка создания папки на Яндекс Диск: {response.status_code}')
+            error = response.json()['error']
+            with open('log.txt', 'w') as log_file:
+                log_file.write(error)
             return False
 
     def save_photo(self, url:str, path:str)->bool:
